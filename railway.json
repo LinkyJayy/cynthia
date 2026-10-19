@@ -7,7 +7,7 @@
   "deploy": {
     "numReplicas": 1,
     "healthcheckPath": "/healthz",
-    "healthcheckTimeout": 120,
+    "healthcheckTimeout": 300,
     "restartPolicyType": "ALWAYS",
     "sleepApplication": false
   }

@@ -14,9 +14,18 @@ import api from './routes.js';
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const modules = path.join(root, 'node_modules');
 
-await initDb();
-await initAuth();
-await initPush();
+// Log stray async errors (e.g. from the headless browser) instead of taking the whole server down.
+process.on('unhandledRejection', (e) => console.error('[cynthia] unhandled rejection:', e));
+process.on('uncaughtException', (e) => console.error('[cynthia] uncaught exception:', e));
+
+try {
+  await initDb();
+  await initAuth();
+  await initPush();
+} catch (e) {
+  console.error(`[cynthia] startup failed: ${e.message}`);
+  process.exit(1);
+}
 
 if (!config.geminiApiKey) console.warn('[cynthia] GEMINI_API_KEY is not set — chats will fail until it is configured.');
 

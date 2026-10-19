@@ -93,15 +93,39 @@ CREATE TABLE IF NOT EXISTS settings (
 async function initPostgres() {
   const pg = (await import('pg')).default;
   pg.types.setTypeParser(20, (v) => (v === null ? null : Number(v))); // BIGINT -> number
-  const ssl = /sslmode=disable/.test(config.databaseUrl) || /\.railway\.internal|localhost|127\.0\.0\.1/.test(config.databaseUrl)
+  if (/\$\{\{/.test(config.databaseUrl)) {
+    throw new Error('DATABASE_URL contains an unresolved Railway reference. Use the variable reference picker so it becomes ${{Postgres.DATABASE_URL}} and make sure the Postgres service exists.');
+  }
+  // Railway's private network doesn't use TLS; public/managed hosts usually do (often with self-signed certs).
+  let ssl = /sslmode=disable/.test(config.databaseUrl) || /\.railway\.internal|localhost|127\.0\.0\.1/.test(config.databaseUrl)
     ? false
     : { rejectUnauthorized: false };
-  const pool = new pg.Pool({ connectionString: config.databaseUrl, ssl, max: 10 });
+  const connectionString = config.databaseUrl.replace(/([?&])sslmode=[^&]*&?/, '$1').replace(/[?&]$/, '');
   const toPg = (sql) => {
     let i = 0;
     return sql.replace(/\?/g, () => `$${++i}`);
   };
-  await pool.query(SCHEMA.replace(/\{\{BLOB\}\}/g, 'BYTEA'));
+
+  // The database (or Railway's private DNS) may not be ready the instant we boot, so retry for a while.
+  let pool;
+  for (let attempt = 1; ; attempt++) {
+    pool = new pg.Pool({ connectionString, ssl, max: 10, connectionTimeoutMillis: 10000 });
+    // Without this listener, a dropped idle connection would crash the whole process.
+    pool.on('error', (e) => console.error('[db] idle client error:', e.message));
+    try {
+      await pool.query(SCHEMA.replace(/\{\{BLOB\}\}/g, 'BYTEA'));
+      break;
+    } catch (e) {
+      await pool.end().catch(() => {});
+      if (ssl && /does not support SSL/i.test(e.message)) {
+        ssl = false;
+        continue;
+      }
+      if (attempt >= 15) throw e;
+      console.warn(`[db] connection attempt ${attempt} failed (${e.code || e.message}); retrying…`);
+      await new Promise((r) => setTimeout(r, Math.min(2000 * attempt, 10000)));
+    }
+  }
   return {
     kind: 'postgres',
     async all(sql, params = []) {

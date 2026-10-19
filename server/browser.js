@@ -91,7 +91,14 @@ async function getSession(userId) {
     userAgent:
       'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/141.0.0.0 Safari/537.36 Cynthia/1.0',
   });
-  await context.route('**/*', async (route) => ((await allowed(route.request().url())) ? route.continue() : route.abort()));
+  await context.route('**/*', async (route) => {
+    try {
+      if (await allowed(route.request().url())) await route.continue();
+      else await route.abort();
+    } catch {
+      // page/context closed mid-request
+    }
+  });
   const page = await context.newPage();
   s = { context, page, lastUsed: Date.now() };
   sessions.set(userId, s);
