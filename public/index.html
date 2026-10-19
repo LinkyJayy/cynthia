@@ -1,0 +1,163 @@
+<!doctype html>
+<html lang="en" data-chat-style="imessage" data-theme="system">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, interactive-widget=resizes-content" />
+  <title>Cynthia</title>
+  <meta name="description" content="Cynthia — your always-on AI assistant." />
+  <meta name="theme-color" content="#220059" />
+  <meta name="mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <meta name="apple-mobile-web-app-title" content="Cynthia" />
+  <link rel="manifest" href="/manifest.webmanifest" />
+  <link rel="icon" href="/favicon.png" type="image/png" />
+  <link rel="apple-touch-icon" href="/icons/apple-touch-icon.png" />
+  <link rel="stylesheet" href="/css/app.css" />
+  <script type="importmap">
+    {
+      "imports": {
+        "three": "/vendor/three/build/three.module.js",
+        "three/addons/": "/vendor/three/examples/jsm/"
+      }
+    }
+  </script>
+</head>
+<body>
+  <!-- ============================== Splash -->
+  <div id="splash" class="splash"><img src="/icons/logo.png" alt="" /></div>
+
+  <!-- ============================== Auth -->
+  <main id="auth" class="auth" hidden>
+    <div class="auth-card">
+      <img class="auth-logo" src="/icons/logo.png" alt="Cynthia logo" />
+      <h1>Cynthia</h1>
+      <p class="muted">Your always-on AI assistant</p>
+      <div class="seg" role="tablist">
+        <button type="button" class="seg-btn active" data-mode="login" role="tab">Sign in</button>
+        <button type="button" class="seg-btn" data-mode="signup" role="tab">Create account</button>
+      </div>
+      <form id="auth-form" autocomplete="on">
+        <label class="field signup-only" hidden>
+          <span>Name</span>
+          <input name="name" autocomplete="name" placeholder="Your name" />
+        </label>
+        <label class="field">
+          <span>Email</span>
+          <input name="email" type="email" autocomplete="email" placeholder="you@example.com" required />
+        </label>
+        <label class="field">
+          <span>Password</span>
+          <input name="password" type="password" autocomplete="current-password" placeholder="At least 8 characters" required minlength="8" />
+        </label>
+        <p id="auth-error" class="error" hidden></p>
+        <button class="btn primary block" type="submit" id="auth-submit">Sign in</button>
+      </form>
+    </div>
+  </main>
+
+  <!-- ============================== App -->
+  <div id="app" class="app" hidden>
+    <aside class="sidebar" id="sidebar">
+      <header class="side-head">
+        <button class="icon-btn" id="open-settings" title="Settings" aria-label="Settings">
+          <svg viewBox="0 0 24 24"><path d="M12 15.5A3.5 3.5 0 1 0 12 8.5a3.5 3.5 0 0 0 0 7Zm7.4-2.5a7.6 7.6 0 0 0 0-2l2-1.6-2-3.4-2.4 1a7.4 7.4 0 0 0-1.7-1L15 3h-4l-.3 2.5a7.4 7.4 0 0 0-1.7 1l-2.4-1-2 3.4 2 1.6a7.6 7.6 0 0 0 0 2l-2 1.6 2 3.4 2.4-1c.5.4 1.1.8 1.7 1L11 21h4l.3-2.5c.6-.2 1.2-.6 1.7-1l2.4 1 2-3.4-2-1.6Z"/></svg>
+        </button>
+        <div class="side-title">
+          <img src="/icons/logo-128.png" alt="" />
+          <span>Chats</span>
+        </div>
+        <button class="icon-btn" id="new-chat" title="New chat" aria-label="New chat">
+          <svg viewBox="0 0 24 24"><path d="M4 20h4l10.5-10.5a2.8 2.8 0 0 0-4-4L4 16v4Zm9.5-13.5 4 4"/></svg>
+        </button>
+      </header>
+      <div class="search-wrap"><input id="search" type="search" placeholder="Search" aria-label="Search chats" /></div>
+      <nav class="conv-list" id="conv-list" aria-label="Conversations"></nav>
+      <footer class="side-foot">
+        <button class="foot-btn" data-panel="computer"><svg viewBox="0 0 24 24"><path d="M3 5h18v11H3zM8 20h8M12 16v4"/></svg>Computer</button>
+        <button class="foot-btn" data-panel="tasks"><svg viewBox="0 0 24 24"><circle cx="12" cy="13" r="8"/><path d="M12 9v4l2.5 2.5M9 2h6"/></svg>Tasks</button>
+        <button class="foot-btn" data-panel="connections"><svg viewBox="0 0 24 24"><path d="M10 14a4 4 0 0 0 5.7 0l3-3a4 4 0 0 0-5.7-5.7l-1 1M14 10a4 4 0 0 0-5.7 0l-3 3a4 4 0 0 0 5.7 5.7l1-1"/></svg>Connect</button>
+      </footer>
+    </aside>
+
+    <section class="chat" id="chat">
+      <header class="chat-head">
+        <button class="icon-btn back-btn" id="back" aria-label="Back to chats">
+          <svg viewBox="0 0 24 24"><path d="m15 5-7 7 7 7"/></svg><span class="back-label">Chats</span>
+        </button>
+        <div class="contact" id="contact">
+          <img class="avatar" src="/icons/logo-128.png" alt="" />
+          <div class="contact-text">
+            <div class="contact-name">Cynthia</div>
+            <div class="contact-status" id="contact-status">online</div>
+          </div>
+        </div>
+        <div class="head-actions">
+          <button class="icon-btn" id="chat-menu" aria-label="Chat options" title="Chat options">
+            <svg viewBox="0 0 24 24"><circle cx="12" cy="5" r="1.6"/><circle cx="12" cy="12" r="1.6"/><circle cx="12" cy="19" r="1.6"/></svg>
+          </button>
+        </div>
+      </header>
+
+      <div class="messages" id="messages" aria-live="polite">
+        <div class="empty" id="empty">
+          <img src="/icons/logo.png" alt="" />
+          <h2>Hi, I'm Cynthia</h2>
+          <p>I can search and browse the web, run code, build 3D models, make images, remember things, and work for you in the background.</p>
+          <div class="suggestions" id="suggestions"></div>
+        </div>
+      </div>
+
+      <form class="composer" id="composer">
+        <div class="attach-preview" id="attach-preview" hidden></div>
+        <div class="composer-row">
+          <button type="button" class="icon-btn attach-btn" id="attach" aria-label="Attach files" title="Attach">
+            <svg viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg>
+          </button>
+          <input type="file" id="file-input" multiple hidden accept="image/*,application/pdf,text/*,.csv,.json,.md,audio/*,video/*" />
+          <div class="input-wrap">
+            <textarea id="input" rows="1" placeholder="Message" aria-label="Message"></textarea>
+            <button type="button" class="icon-btn mic-btn" id="mic" aria-label="Dictate" title="Dictate" hidden>
+              <svg viewBox="0 0 24 24"><rect x="9" y="3" width="6" height="11" rx="3"/><path d="M5 11a7 7 0 0 0 14 0M12 18v3"/></svg>
+            </button>
+          </div>
+          <button type="submit" class="send-btn" id="send" aria-label="Send" disabled>
+            <svg class="i-send" viewBox="0 0 24 24"><path d="M12 19V5M5 12l7-7 7 7"/></svg>
+            <svg class="i-stop" viewBox="0 0 24 24"><rect x="7" y="7" width="10" height="10" rx="2"/></svg>
+          </button>
+        </div>
+      </form>
+    </section>
+  </div>
+
+  <!-- ============================== Sheets -->
+  <div class="sheet-backdrop" id="sheet-backdrop" hidden></div>
+  <div class="sheet" id="sheet" role="dialog" aria-modal="true" hidden>
+    <header class="sheet-head">
+      <h2 id="sheet-title">Settings</h2>
+      <button class="text-btn" id="sheet-close">Done</button>
+    </header>
+    <div class="sheet-body" id="sheet-body"></div>
+  </div>
+
+  <div class="viewer" id="viewer" hidden>
+    <header class="viewer-head">
+      <button class="text-btn" id="viewer-close">Close</button>
+      <div class="viewer-title" id="viewer-title"></div>
+      <div class="viewer-actions">
+        <button class="pill" data-export="glb">GLB</button>
+        <button class="pill" data-export="stl">STL</button>
+        <button class="pill" data-export="obj">OBJ</button>
+      </div>
+    </header>
+    <div class="viewer-canvas" id="viewer-canvas"></div>
+    <p class="viewer-hint">Drag to rotate · pinch or scroll to zoom</p>
+  </div>
+
+  <div class="lightbox" id="lightbox" hidden><img alt="" /></div>
+  <div class="menu" id="menu" hidden></div>
+  <div class="toast" id="toast" hidden></div>
+
+  <script type="module" src="/js/app.js"></script>
+</body>
+</html>
